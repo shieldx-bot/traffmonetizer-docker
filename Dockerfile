@@ -1,26 +1,21 @@
-# TraffMonetizer CLI runner — deployable on Caasify, Render, Fly.io, Railway, Koyeb...
+# TraffMonetizer CLI runner — deployable on Caasify, Render, Fly.io, Railway...
 #
-# Why this wrapper exists:
-#   * The official traffmonetizer/cli_v2 image is built FROM scratch:
-#     a single binary, no shell, no HOME, no writable /tmp.
-#     The CLI needs HOME to persist its device id, otherwise it exits.
-#   * Some platforms (e.g. Render free web services) require the service to
-#     listen on an HTTP port; the raw CLI never opens one.
-#
-# This image adds busybox (shell + httpd) and a start script that:
-#   * exports HOME=/tmp so the CLI can persist its device id
-#   * serves a tiny status page on $PORT (health-check friendly)
-#   * restarts the CLI automatically if it ever exits
+# The official traffmonetizer/cli_v2 image is FROM scratch (no shell, no HOME):
+# the CLI exits on PaaS platforms. This single-stage image fixes that:
+#   * busybox provides the shell and a tiny HTTP status page on $PORT
+#   * HOME=/tmp lets the CLI persist its device id
+#   * start.sh auto-restarts the CLI
 #
 # Required environment variables:
 #   TM_TOKEN        - your TraffMonetizer app token (REQUIRED)
-#   TM_DEVICE_NAME  - device name shown on the TM dashboard (default: render2)
+#   TM_DEVICE_NAME  - device name on the TM dashboard (default: render2)
 #   PORT            - HTTP status page port (default: 8080)
+#
+# The bundled bin/cli is the official TraffMonetizer linux/amd64 binary
+# extracted from traffmonetizer/cli_v2:latest.
 
-FROM busybox:stable AS busybox
-FROM scratch
-COPY --from=traffmonetizer/cli_v2:latest /usr/local/bin/cli /usr/local/bin/cli
-COPY --from=busybox /bin/busybox /bin/busybox
+FROM busybox:stable
+COPY bin/cli /usr/local/bin/cli
 COPY start.sh /start.sh
 COPY www /www
 ENV HOME=/tmp \
