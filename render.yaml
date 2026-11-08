@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: tm-node
+    runtime: docker
+    plan: free
+    healthCheckPath: /
+    autoDeploy: "yes"
+    envVars:
+      - key: TM_TOKEN
+        sync: false
+      - key: TM_DEVICE_NAME
+        value: render2
